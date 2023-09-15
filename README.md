@@ -5,6 +5,7 @@
 -   [Cloudflare](https://www.cloudflare.com/)
 -   [DigitalOcean](https://www.digitalocean.com/)
 -   [GoDaddy](https://www.godaddy.com/)
+-   [Route53](https://aws.amazon.com/route53/) (Coming Soon)
 
 ## Installation
 
