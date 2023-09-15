@@ -15,7 +15,7 @@ class Config
 
     public function __construct()
     {
-        $this->path = env('HOME') . '/.dns-manager/config.json';
+        $this->path = config('app.config_directory') . '/config.json';
         $this->createConfigFileIfMissing();
         $this->cacheConfig();
     }

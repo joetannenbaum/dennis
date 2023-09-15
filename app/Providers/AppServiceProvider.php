@@ -11,7 +11,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if (Phar::running()) {
-            File::ensureDirectoryExists(env('HOME') . '/.dns-manager');
+            File::ensureDirectoryExists(config('app.config_directory'));
         }
     }
 

@@ -141,11 +141,6 @@ class GoDaddy extends AbstractDnsProvider
             ->asJson();
     }
 
-    protected function getRecord(RecordType $type, string $name): ?string
-    {
-        return $this->getRecord($type, $name)['data'] ?? null;
-    }
-
     protected function getRecord(Record $record): ?array
     {
         try {

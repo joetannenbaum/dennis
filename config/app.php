@@ -72,4 +72,6 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
     ],
 
+    'config_directory' => env('HOME') . '/.dennis',
+
 ];
