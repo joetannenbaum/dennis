@@ -36,3 +36,9 @@ dennis records:list
 ```bash
 dennis nameservers:update
 ```
+
+## Roadmap
+
+-   [ ] Support Route53
+-   [ ] Configurable sets of records to add
+-   [ ] Ability to connect directly domains directly to droplets, servers, load balancers, etc
