@@ -10,7 +10,7 @@ use function Laravel\Prompts\select;
 
 class AddAccount extends Command
 {
-    protected $signature = 'account:add';
+    protected $signature = 'accounts:add';
 
     protected $description = 'Command description';
 
