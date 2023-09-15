@@ -10,7 +10,6 @@ use App\Support\SelectsADomain;
 use LaravelZero\Framework\Commands\Command;
 
 use function Laravel\Prompts\info;
-use function Laravel\Prompts\table;
 
 class ListRecords extends Command
 {
@@ -43,9 +42,9 @@ class ListRecords extends Command
             return;
         }
 
-        table(
+        $this->promptsTable(
             ['Type', 'Name', 'Value', 'TTL', 'Priority', 'Comment'],
-            $records,
+            $records->toArray(),
         );
     }
 }
