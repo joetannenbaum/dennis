@@ -59,6 +59,9 @@ abstract class AbstractDnsProvider
         return $this->domain;
     }
 
+    /** @return Collection<string> */
+    abstract public function listDomains(): Collection;
+
     public function setUpNewCredentials(): bool
     {
         $credentials = $this->addNewCredentials();

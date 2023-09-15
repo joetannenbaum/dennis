@@ -66,7 +66,7 @@ class GoDaddy extends AbstractDnsProvider
         ));
     }
 
-    public function listDomains(): array
+    public function listDomains(): Collection
     {
         $result = $this->client()->get('domains', [
             'limit' => 500,
@@ -74,8 +74,7 @@ class GoDaddy extends AbstractDnsProvider
 
         return collect($result)
             ->filter(fn ($domain) => $domain['status'] === 'ACTIVE')
-            ->pluck('domain')
-            ->toArray();
+            ->pluck('domain');
     }
 
     protected function addProviderRecord(Record $record): void

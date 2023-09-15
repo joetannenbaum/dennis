@@ -35,7 +35,6 @@ class AddRecord extends Command
         $name = text(
             label: 'Name',
             required: true,
-            // TODO: This hint is probably more for just A records?
             hint: 'The host name, alias, or service being defined by the record. @ for the root domain.',
         );
 

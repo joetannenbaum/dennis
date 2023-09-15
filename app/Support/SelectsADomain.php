@@ -17,7 +17,7 @@ trait SelectsADomain
     {
         $provider = $this->selectAccount($config);
 
-        $domains = collect($provider->listDomains());
+        $domains = $provider->listDomains();
 
         $selectedDomain = suggest(
             label: 'Domain',

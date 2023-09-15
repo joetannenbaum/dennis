@@ -79,11 +79,11 @@ class Cloudflare extends AbstractDnsProvider
         );
     }
 
-    public function listDomains(): array
+    public function listDomains(): Collection
     {
         $response = $this->client()->get('zones', ['per_page' => 200])->json();
 
-        return collect($response['result'])->pluck('name')->toArray();
+        return collect($response['result'])->pluck('name');
     }
 
     protected function getZoneByDomain(): ?array

@@ -68,13 +68,13 @@ class DigitalOcean extends AbstractDnsProvider
             ));
     }
 
-    public function listDomains(): array
+    public function listDomains(): Collection
     {
         $result = $this->client()->get('domains', [
             'per_page' => 200,
         ])->json();
 
-        return collect($result['domains'])->pluck('name')->toArray();
+        return collect($result['domains'])->pluck('name');
     }
 
     protected function getExistingDomain(): ?array
