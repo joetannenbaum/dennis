@@ -7,7 +7,8 @@
 -   [GoDaddy](https://www.godaddy.com/)
 -   [Route53](https://aws.amazon.com/route53/) (Coming Soon)
 
-:warning: **Heads up!** This project is still in early development. While I feel pretty confident about it, just, like, you know. Be aware of that.
+> [!IMPORTANT]  
+> **Heads up!** This project is still in early development. While I feel pretty confident about it, just, like, you know. Be aware of that.
 
 ## Installation
 
