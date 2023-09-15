@@ -13,6 +13,12 @@
 composer global require joetannenbaum/dennis
 ```
 
+Make sure that Composer binaries are in your `$PATH`:
+
+```bash
+export PATH="$PATH:$HOME/.composer/vendor/bin"
+```
+
 ## Adding an Account
 
 ```bash
