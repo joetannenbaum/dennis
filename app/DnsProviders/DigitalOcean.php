@@ -9,6 +9,7 @@ use App\Enums\RecordType;
 use App\Support\Domain;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 
@@ -78,9 +79,17 @@ class DigitalOcean extends AbstractDnsProvider
     /** @return array<string, mixed>|null */
     protected function getExistingDomain(): ?array
     {
-        $result = $this->client()->get("domains/{$this->domain}")->throw()->json();
+        try {
+            $result = $this->client()->get("domains/{$this->domain}")->throw()->json();
+        } catch (RequestException $e) {
+            if ($e->response->status() === 404) {
+                return null;
+            }
 
-        return $result['domain'] ?? null;
+            throw $e;
+        }
+
+        return $result['domain'];
     }
 
     protected function addProviderRecord(Record $record): void
