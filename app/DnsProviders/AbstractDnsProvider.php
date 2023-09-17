@@ -22,6 +22,7 @@ abstract class AbstractDnsProvider
 
     protected string $domain;
 
+    /** @var array<string, string> */
     protected array $credentials;
 
     public function __construct(
@@ -40,6 +41,7 @@ abstract class AbstractDnsProvider
         return class_basename(get_called_class());
     }
 
+    /** @param  array<string, string>  $credentials */
     public function setCredentials(array $credentials): static
     {
         $this->credentials = $credentials;
@@ -59,7 +61,7 @@ abstract class AbstractDnsProvider
         return $this->domain;
     }
 
-    /** @return Collection<string> */
+    /** @return Collection<int, string> */
     abstract public function listDomains(): Collection;
 
     public function setUpNewCredentials(): bool
@@ -114,16 +116,16 @@ abstract class AbstractDnsProvider
         }
     }
 
-    /** @return Collection<Record> */
+    /** @return Collection<int, Record> */
     abstract public function listRecords(): Collection;
 
     /** @return array<int, string> */
     abstract public function getNameservers(): array;
 
     /** @param  array<int, string>  $nameservers */
-    abstract public function updateNameservers(array $nameservers);
+    abstract public function updateNameservers(array $nameservers): void;
 
-    abstract public function addDomain();
+    abstract public function addDomain(): void;
 
     protected function prepValue(Record $record): string
     {

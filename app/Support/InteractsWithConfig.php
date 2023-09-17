@@ -8,22 +8,22 @@ use Illuminate\Support\Arr;
 
 trait InteractsWithConfig
 {
-    protected function getAllConfigsForApi(string $host)
+    protected function getAllConfigsForApi(string $host): mixed
     {
         return $this->config->get($this->getApiConfigKey($host));
     }
 
-    protected function setApiConfigValue(string $host, string $key, $value)
+    protected function setApiConfigValue(string $host, string $key, mixed $value): void
     {
-        return $this->config->set($this->getApiConfigKey($host) . '.' . $key, $value);
+        $this->config->set($this->getApiConfigKey($host) . '.' . $key, $value);
     }
 
-    protected function getApiConfigValue(string $host, string $key, string $default = null)
+    protected function getApiConfigValue(string $host, string $key, mixed $default = null): mixed
     {
         return Arr::get($this->getAllConfigsForApi($host), $key, $default);
     }
 
-    protected function getApiConfigKey(string $host)
+    protected function getApiConfigKey(string $host): string
     {
         return 'credentials.' . str_replace('.', '-', $host);
     }

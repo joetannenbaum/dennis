@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Closure;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider;
@@ -19,19 +20,19 @@ class AppServiceProvider extends ServiceProvider
         Command::mixin(
             new class
             {
-                public function promptsTable()
+                public function promptsTable(): Closure
                 {
-                    return function (array $headers, array $data) {
+                    return function (array $headers, array $data): void {
                         $box = (new TableStyle())
                             ->setHorizontalBorderChars('─')
                             ->setVerticalBorderChars(' │', '│')
                             ->setCrossingChars('┼', ' ┌', '┬', '─┐', '─┤', '─┘', '┴', ' └', ' ├');
 
-                        return $this->table($headers, $data, $box);
+                        // @phpstan-ignore-next-line
+                        $this->table($headers, $data, $box);
                     };
                 }
             }
-
         );
     }
 

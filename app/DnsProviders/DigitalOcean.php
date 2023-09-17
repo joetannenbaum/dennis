@@ -9,10 +9,8 @@ use App\Enums\RecordType;
 use App\Support\Domain;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\password;
@@ -24,7 +22,7 @@ class DigitalOcean extends AbstractDnsProvider
         return 'https://api.digitalocean.com/v2/';
     }
 
-    public function addDomain()
+    public function addDomain(): void
     {
         if ($this->getExistingDomain() === null) {
             $this->client()->post('domains', [
@@ -33,7 +31,7 @@ class DigitalOcean extends AbstractDnsProvider
         }
     }
 
-    public function updateNameservers(array $nameservers)
+    public function updateNameservers(array $nameservers): void
     {
         // TODO: Maybe there are flags on the class that tell us whether this is possible to even add as an option?
         throw new Exception('DigitalOcean does not allow updating nameservers via the API.');
@@ -77,6 +75,7 @@ class DigitalOcean extends AbstractDnsProvider
         return collect($result['domains'])->pluck('name');
     }
 
+    /** @return array<string, mixed>|null */
     protected function getExistingDomain(): ?array
     {
         $result = $this->client()->get("domains/{$this->domain}")->throw()->json();
@@ -144,15 +143,7 @@ class DigitalOcean extends AbstractDnsProvider
             ->asJson();
     }
 
-    protected function getDefaultNewAccountName(array $credentials): ?string
-    {
-        $result = $this->client($credentials)->get('account')->json();
-
-        $teamName = Arr::get($result, 'account.team.name');
-
-        return $teamName === 'My Team' ? null : Str::slug($teamName);
-    }
-
+    /** @return array<string, mixed>|null */
     protected function getRecord(Record $record): ?array
     {
         $host = Domain::getFullDomain($record->name === '@' ? '' : $record->name, $this->domain);

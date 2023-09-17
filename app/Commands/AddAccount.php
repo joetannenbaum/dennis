@@ -14,7 +14,7 @@ class AddAccount extends Command
 
     protected $description = 'Command description';
 
-    public function handle()
+    public function handle(): void
     {
         $providers = collect(config('dns.providers'));
 

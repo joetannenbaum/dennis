@@ -11,6 +11,7 @@ class Config
 {
     protected string $path;
 
+    /** @var array<string, mixed> */
     protected array $config;
 
     public function __construct()
@@ -20,12 +21,12 @@ class Config
         $this->cacheConfig();
     }
 
-    public function get(string $key, $default = null)
+    public function get(string $key, mixed $default = null): mixed
     {
         return Arr::get($this->config, $key, $default);
     }
 
-    public function set(string $key, $value): void
+    public function set(string $key, mixed $value): void
     {
         Arr::set($this->config, $key, $value);
         $this->writeAndRefreshCache();

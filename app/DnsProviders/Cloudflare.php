@@ -25,7 +25,7 @@ class Cloudflare extends AbstractDnsProvider
         return 'https://api.cloudflare.com/client/v4/';
     }
 
-    public function addDomain()
+    public function addDomain(): void
     {
         if ($this->getZoneByDomain() !== null) {
             // We already have the domain, so we don't need to do anything
@@ -42,7 +42,7 @@ class Cloudflare extends AbstractDnsProvider
         ])->throw();
     }
 
-    public function updateNameservers(array $nameservers)
+    public function updateNameservers(array $nameservers): void
     {
         // TODO: Is this true? Seems a bit nebulous via the docs
         throw new Exception('Cloudflare does not allow updating nameservers via the API.');
@@ -86,6 +86,7 @@ class Cloudflare extends AbstractDnsProvider
         return collect($response['result'])->pluck('name');
     }
 
+    /** @return array<string, mixed>|null */
     protected function getZoneByDomain(): ?array
     {
         return $this->client()->get('zones', [
@@ -95,7 +96,10 @@ class Cloudflare extends AbstractDnsProvider
 
     protected function getAccountId(): string
     {
-        $accounts = collect($this->client()->get('accounts')->json()['result']);
+        /** @var array<int, array<string, mixed>> $response */
+        $response = $this->client()->get('accounts')->json()['result'];
+
+        $accounts = collect($response);
 
         if ($accounts->count() === 1) {
             return $accounts->first()['id'];
@@ -167,6 +171,7 @@ class Cloudflare extends AbstractDnsProvider
             ->asJson();
     }
 
+    /** @return array<string, string>|null */
     protected function getRecord(Record $record): ?array
     {
         $host = Domain::getFullDomain($record->name === '@' ? '' : $record->name, $this->domain);
@@ -182,7 +187,7 @@ class Cloudflare extends AbstractDnsProvider
         return $records['result'][0] ?? null;
     }
 
-    protected function getZoneId()
+    protected function getZoneId(): string
     {
         if (isset($this->zoneId)) {
             return $this->zoneId;

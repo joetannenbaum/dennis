@@ -19,7 +19,7 @@ class ListRecords extends Command
 
     protected $description = 'Command description';
 
-    public function handle(Config $config)
+    public function handle(Config $config): void
     {
         $provider = $this->selectDomain($config);
 
@@ -42,6 +42,7 @@ class ListRecords extends Command
             return;
         }
 
+        // @phpstan-ignore-next-line
         $this->promptsTable(
             ['Type', 'Name', 'Value', 'TTL', 'Priority', 'Comment'],
             $records->toArray(),

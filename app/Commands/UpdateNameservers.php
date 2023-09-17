@@ -22,7 +22,7 @@ class UpdateNameservers extends Command
 
     protected $description = 'Command description';
 
-    public function handle(Config $config)
+    public function handle(Config $config): void
     {
         intro('Update Nameservers');
 

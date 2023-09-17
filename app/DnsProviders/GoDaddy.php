@@ -23,13 +23,13 @@ class GoDaddy extends AbstractDnsProvider
         return 'https://api.godaddy.com/v1/';
     }
 
-    public function addDomain()
+    public function addDomain(): void
     {
         // TODO: Maybe there are flags on the class that tell us whether this is possible to even add as an option?
         throw new Exception('GoDaddy does not allow adding DNS hosting domains via the API.');
     }
 
-    public function updateNameservers(array $nameservers)
+    public function updateNameservers(array $nameservers): void
     {
         $this->client()->patch("domains/{$this->domain}", [
             'nameServers' => $nameservers,
@@ -51,7 +51,7 @@ class GoDaddy extends AbstractDnsProvider
                 'limit' => 500,
             ])->throw()->json();
         } catch (RequestException $e) {
-            error($e->response->json(['message']) ?? 'An error occurred while fetching records.');
+            error($e->response->json('message') ?? 'An error occurred while fetching records.');
 
             return collect();
         }
@@ -141,6 +141,7 @@ class GoDaddy extends AbstractDnsProvider
             ->asJson();
     }
 
+    /** @return array<string, mixed>|null */
     protected function getRecord(Record $record): ?array
     {
         try {

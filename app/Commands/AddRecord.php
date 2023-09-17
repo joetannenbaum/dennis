@@ -23,7 +23,7 @@ class AddRecord extends Command
 
     protected $description = 'Command description';
 
-    public function handle(Config $config)
+    public function handle(Config $config): void
     {
         $provider = $this->selectDomain($config);
 
