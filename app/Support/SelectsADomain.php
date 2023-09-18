@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
-use App\DnsProviders\AbstractDnsProvider;
+use App\DnsProviders\Provider;
 use Illuminate\Support\Str;
 
 use function Laravel\Prompts\suggest;
@@ -13,11 +13,11 @@ trait SelectsADomain
 {
     use SelectsAnAccount;
 
-    protected function selectDomain(Config $config): AbstractDnsProvider
+    protected function selectDomain(): Provider
     {
-        $provider = $this->selectAccount($config);
+        $provider = $this->selectAccount();
 
-        $domains = $provider->listDomains();
+        $domains = $provider->domains();
 
         $selectedDomain = suggest(
             label: 'Domain',

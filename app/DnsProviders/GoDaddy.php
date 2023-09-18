@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\DnsProviders;
 
+use App\Contracts\Provider;
 use App\Data\Record;
+use App\DnsProviders\Abilities\HandlesDomains;
+use App\DnsProviders\Abilities\PreparesValues;
+use App\DnsProviders\Abilities\SetsCredentials;
 use App\Enums\RecordType;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
@@ -16,9 +20,16 @@ use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\password;
 
-class GoDaddy extends AbstractDnsProvider
+class GoDaddy implements Provider
 {
-    protected static function getApiBaseUrl(): string
+    use HandlesDomains, PreparesValues, SetsCredentials;
+
+    public static function getName(): string
+    {
+        return 'GoDaddy';
+    }
+
+    public static function getApiBaseUrl(): string
     {
         return 'https://api.godaddy.com/v1/';
     }
@@ -44,7 +55,7 @@ class GoDaddy extends AbstractDnsProvider
         ];
     }
 
-    public function listRecords(): Collection
+    public function records(): Collection
     {
         try {
             $response = $this->client()->get("domains/{$this->domain}/records", [
@@ -66,7 +77,7 @@ class GoDaddy extends AbstractDnsProvider
         ));
     }
 
-    public function listDomains(): Collection
+    public function domains(): Collection
     {
         $result = $this->client()->get('domains', [
             'limit' => 500,
@@ -77,7 +88,7 @@ class GoDaddy extends AbstractDnsProvider
             ->pluck('domain');
     }
 
-    protected function addProviderRecord(Record $record): void
+    public function addRecord(Record $record): void
     {
         $this->client()->patch("domains/{$this->domain}/records", [
             [
@@ -89,7 +100,7 @@ class GoDaddy extends AbstractDnsProvider
         ]);
     }
 
-    protected function updateProviderRecord(Record $record): void
+    public function updateRecord(Record $record): void
     {
         $this->client()->put("domains/{$this->domain}/records/{$record->type->value}/{$record->name}", [
             [
@@ -99,29 +110,7 @@ class GoDaddy extends AbstractDnsProvider
         ]);
     }
 
-    protected function addNewCredentials(): array
-    {
-        info('You can retrieve your GoDaddy keys here:');
-        info('https://developer.godaddy.com/keys');
-
-        $key = password('Your GoDaddy key');
-        $secret = password('Your GoDaddy secret');
-
-        return ['key' => $key, 'secret' => $secret];
-    }
-
-    protected function credentialsAreValid(): bool
-    {
-        try {
-            $this->client()->get('domains', ['limit' => 1])->throw()->json();
-
-            return true;
-        } catch (Exception $e) {
-            return false;
-        }
-    }
-
-    protected function prepValue(Record $record): string
+    public function prepareValue(Record $record): string
     {
         if ($record->type === RecordType::CNAME) {
             return $this->withTrailingDot($record->value);
@@ -130,19 +119,8 @@ class GoDaddy extends AbstractDnsProvider
         return $record->value;
     }
 
-    protected function client(): PendingRequest
-    {
-        return Http::baseUrl(self::getApiBaseUrl())
-            ->withToken(
-                "{$this->credentials['key']}:{$this->credentials['secret']}",
-                'sso-key',
-            )
-            ->acceptJson()
-            ->asJson();
-    }
-
     /** @return array<string, mixed>|null */
-    protected function getRecord(Record $record): ?array
+    public function getRecord(Record $record): ?array
     {
         try {
             $response = $this->client()
@@ -154,5 +132,38 @@ class GoDaddy extends AbstractDnsProvider
         } catch (Exception $e) {
             return null;
         }
+    }
+
+    public function addNewCredentials(): array
+    {
+        info('You can retrieve your GoDaddy keys here:');
+        info('https://developer.godaddy.com/keys');
+
+        $key = password('Your GoDaddy key');
+        $secret = password('Your GoDaddy secret');
+
+        return ['key' => $key, 'secret' => $secret];
+    }
+
+    public function credentialsAreValid(): bool
+    {
+        try {
+            $this->client()->get('domains', ['limit' => 1])->throw()->json();
+
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    protected function client(): PendingRequest
+    {
+        return Http::baseUrl(self::getApiBaseUrl())
+            ->withToken(
+                "{$this->credentials['key']}:{$this->credentials['secret']}",
+                'sso-key',
+            )
+            ->acceptJson()
+            ->asJson();
     }
 }

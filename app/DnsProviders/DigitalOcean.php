@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\DnsProviders;
 
+use App\Contracts\Provider;
 use App\Data\Record;
+use App\DnsProviders\Abilities\HandlesDomains;
+use App\DnsProviders\Abilities\PreparesValues;
+use App\DnsProviders\Abilities\SetsCredentials;
 use App\Enums\RecordType;
 use App\Support\Domain;
 use Exception;
@@ -16,9 +20,16 @@ use Illuminate\Support\Facades\Http;
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\password;
 
-class DigitalOcean extends AbstractDnsProvider
+class DigitalOcean implements Provider
 {
-    protected static function getApiBaseUrl(): string
+    use HandlesDomains, PreparesValues, SetsCredentials;
+
+    public static function getName(): string
+    {
+        return 'DigitalOcean';
+    }
+
+    public static function getApiBaseUrl(): string
     {
         return 'https://api.digitalocean.com/v2/';
     }
@@ -47,7 +58,7 @@ class DigitalOcean extends AbstractDnsProvider
         ];
     }
 
-    public function listRecords(): Collection
+    public function records(): Collection
     {
         $result = $this->client()->get("domains/{$this->domain}/records", [
             'per_page' => 200,
@@ -67,13 +78,78 @@ class DigitalOcean extends AbstractDnsProvider
             ));
     }
 
-    public function listDomains(): Collection
+    public function domains(): Collection
     {
         $result = $this->client()->get('domains', [
             'per_page' => 200,
         ])->json();
 
         return collect($result['domains'])->pluck('name');
+    }
+
+    public function addRecord(Record $record): void
+    {
+        $this->client()->post("domains/{$this->domain}/records", [
+            'type' => $record->type->value,
+            'name' => $record->name,
+            'data' => $record->value,
+            'ttl'  => $record->ttl,
+        ]);
+    }
+
+    public function updateRecord(Record $record): void
+    {
+        $currentRecord = $this->getRecord($record);
+
+        $this->client()->put("domains/{$this->domain}/records/{$currentRecord['id']}", [
+            'type' => $record->type->value,
+            'name' => $record->name,
+            'data' => $record->value,
+            'ttl'  => $record->ttl,
+        ]);
+    }
+
+    public function prepareValue(Record $record): string
+    {
+        if ($record->type === RecordType::CNAME) {
+            return $this->withTrailingDot($record->value);
+        }
+
+        return $record->value;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function getRecord(Record $record): ?array
+    {
+        $host = Domain::getFullDomain($record->name === '@' ? '' : $record->name, $this->domain);
+
+        $records = $this->client()->get("domains/{$this->domain}/records", [
+            'type' => $record->type->value,
+            'name' => $host,
+        ])->json();
+
+        return $records['domain_records'][0] ?? null;
+    }
+
+    public function addNewCredentials(): array
+    {
+        info('You can create a DigitalOcean API token here:');
+        info('https://cloud.digitalocean.com/account/api/tokens');
+
+        $token = password('Your DigitalOcean API token');
+
+        return ['token' => $token];
+    }
+
+    public function credentialsAreValid(): bool
+    {
+        try {
+            $this->client()->get('account')->throw();
+
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     /** @return array<string, mixed>|null */
@@ -92,76 +168,11 @@ class DigitalOcean extends AbstractDnsProvider
         return $result['domain'];
     }
 
-    protected function addProviderRecord(Record $record): void
-    {
-        $this->client()->post("domains/{$this->domain}/records", [
-            'type' => $record->type->value,
-            'name' => $record->name,
-            'data' => $record->value,
-            'ttl'  => $record->ttl,
-        ]);
-    }
-
-    protected function updateProviderRecord(Record $record): void
-    {
-        $currentRecord = $this->getRecord($record);
-
-        $this->client()->put("domains/{$this->domain}/records/{$currentRecord['id']}", [
-            'type' => $record->type->value,
-            'name' => $record->name,
-            'data' => $record->value,
-            'ttl'  => $record->ttl,
-        ]);
-    }
-
-    protected function prepValue(Record $record): string
-    {
-        if ($record->type === RecordType::CNAME) {
-            return $this->withTrailingDot($record->value);
-        }
-
-        return $record->value;
-    }
-
-    protected function addNewCredentials(): array
-    {
-        info('You can create a DigitalOcean API token here:');
-        info('https://cloud.digitalocean.com/account/api/tokens');
-
-        $token = password('Your DigitalOcean API token');
-
-        return ['token' => $token];
-    }
-
-    protected function credentialsAreValid(): bool
-    {
-        try {
-            $this->client()->get('account')->throw();
-
-            return true;
-        } catch (Exception $e) {
-            return false;
-        }
-    }
-
     protected function client(): PendingRequest
     {
         return Http::baseUrl(self::getApiBaseUrl())
             ->withToken($this->credentials['token'])
             ->acceptJson()
             ->asJson();
-    }
-
-    /** @return array<string, mixed>|null */
-    protected function getRecord(Record $record): ?array
-    {
-        $host = Domain::getFullDomain($record->name === '@' ? '' : $record->name, $this->domain);
-
-        $records = $this->client()->get("domains/{$this->domain}/records", [
-            'type' => $record->type->value,
-            'name' => $host,
-        ])->json();
-
-        return $records['domain_records'][0] ?? null;
     }
 }

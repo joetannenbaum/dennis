@@ -6,12 +6,13 @@ namespace App\Commands;
 
 use App\Data\Record;
 use App\Enums\RecordType;
-use App\Support\Config;
 use App\Support\SelectsADomain;
 use LaravelZero\Framework\Commands\Command;
 
 use function App\Validation\rules;
 use function Laravel\Prompts\error;
+use function Laravel\Prompts\intro;
+use function Laravel\Prompts\outro;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
@@ -21,11 +22,13 @@ class AddRecord extends Command
 
     protected $signature = 'records:add';
 
-    protected $description = 'Command description';
+    protected $description = 'Add or update a DNS record for a domain.';
 
-    public function handle(Config $config): void
+    public function handle(): void
     {
-        $provider = $this->selectDomain($config);
+        intro('Add or Update a Record');
+
+        $provider = $this->selectDomain();
 
         $recordType = select(
             label: 'Record Type',
@@ -68,7 +71,7 @@ class AddRecord extends Command
         );
 
         if ($result) {
-            info('Record added successfully.');
+            outro('Record added!');
         } else {
             error('There was an error adding the record.');
         }

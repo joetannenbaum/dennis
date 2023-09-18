@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Support;
 
-use App\DnsProviders\AbstractDnsProvider;
+use App\DnsProviders\Provider;
 
 use function Laravel\Prompts\select;
 
 trait SelectsAnAccount
 {
-    protected function selectAccount(Config $config): AbstractDnsProvider
+    protected function selectAccount(): Provider
     {
+        $config = new Config();
+
         $credentials = collect($config->get('credentials'));
 
         $providers = collect(config('dns.providers'))->mapWithKeys(
@@ -43,6 +45,6 @@ trait SelectsAnAccount
 
         $provider = $accounts->firstWhere('label', $account);
 
-        return app($provider['provider'])->setCredentials($provider['credentials']);
+        return Provider::with(new $provider['provider'])->setCredentials($provider['credentials']);
     }
 }

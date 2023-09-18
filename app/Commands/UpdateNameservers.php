@@ -37,8 +37,6 @@ class UpdateNameservers extends Command
             $fromProvider->updateNameservers($toProvider->getNameservers());
         }, 'Updating nameservers...');
 
-        $this->output->write("\e[1A"); // Move the cursor up one, spinner leaves an extra line
-
         outro('Nameservers updated!');
     }
 }

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Commands;
 
 use App\Data\Record;
-use App\Support\Config;
 use App\Support\SelectsADomain;
 use LaravelZero\Framework\Commands\Command;
 
 use function Laravel\Prompts\info;
+use function Laravel\Prompts\intro;
 
 class ListRecords extends Command
 {
@@ -17,13 +17,15 @@ class ListRecords extends Command
 
     protected $signature = 'records:list';
 
-    protected $description = 'Command description';
+    protected $description = 'List DNS records for a domain.';
 
-    public function handle(Config $config): void
+    public function handle(): void
     {
-        $provider = $this->selectDomain($config);
+        intro('List Records');
 
-        $records = $provider->listRecords()->map(fn (Record $record) => [
+        $provider = $this->selectDomain();
+
+        $records = $provider->records()->map(fn (Record $record) => [
             $record->type->value,
             $record->name,
             wordwrap(

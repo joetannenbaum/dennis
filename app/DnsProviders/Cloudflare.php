@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\DnsProviders;
 
+use App\Contracts\Provider;
 use App\Data\Record;
+use App\DnsProviders\Abilities\HandlesDomains;
+use App\DnsProviders\Abilities\SetsCredentials;
 use App\Enums\RecordType;
 use App\Support\Domain;
 use Exception;
@@ -16,11 +19,18 @@ use function Laravel\Prompts\info;
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\select;
 
-class Cloudflare extends AbstractDnsProvider
+class Cloudflare implements Provider
 {
+    use HandlesDomains, SetsCredentials;
+
     protected string $zoneId;
 
-    protected static function getApiBaseUrl(): string
+    public static function getName(): string
+    {
+        return 'Cloudflare';
+    }
+
+    public static function getApiBaseUrl(): string
     {
         return 'https://api.cloudflare.com/client/v4/';
     }
@@ -59,7 +69,7 @@ class Cloudflare extends AbstractDnsProvider
         return $zone['name_servers'];
     }
 
-    public function listRecords(): Collection
+    public function records(): Collection
     {
         $response = $this->client()->get(
             "zones/{$this->getZoneId()}/dns_records",
@@ -79,11 +89,83 @@ class Cloudflare extends AbstractDnsProvider
         );
     }
 
-    public function listDomains(): Collection
+    public function domains(): Collection
     {
         $response = $this->client()->get('zones', ['per_page' => 200])->json();
 
         return collect($response['result'])->pluck('name');
+    }
+
+    public function addRecord(Record $record): void
+    {
+        $this->client()->post(
+            "zones/{$this->getZoneId()}/dns_records",
+            [
+                'type'    => $record->type->value,
+                'name'    => $record->name,
+                'content' => $record->value,
+                'ttl'     => $record->ttl,
+            ],
+        );
+    }
+
+    public function updateRecord(Record $record): void
+    {
+        $currentRecord = $this->getRecord($record);
+
+        $this->client()->put(
+            "zones/{$this->getZoneId()}/dns_records/{$currentRecord['id']}",
+            [
+                'type'    => $record->type->value,
+                'name'    => $record->name,
+                'content' => $record->value,
+                'ttl'     => $record->ttl,
+            ],
+        );
+    }
+
+    /** @return array<string, string>|null */
+    public function getRecord(Record $record): ?array
+    {
+        $host = Domain::getFullDomain($record->name === '@' ? '' : $record->name, $this->domain);
+
+        $records = $this->client()->get(
+            "zones/{$this->getZoneId()}/dns_records",
+            [
+                'type' => $record->type->value,
+                'name' => $host,
+            ],
+        )->json();
+
+        return $records['result'][0] ?? null;
+    }
+
+    public function prepareValue(Record $record): string
+    {
+        return $record->value;
+    }
+
+    public function addNewCredentials(): array
+    {
+        info('You can create a Cloudflare API token here:');
+        info('https://dash.cloudflare.com/profile/api-tokens');
+        info('Make sure you assign it the following permissions:');
+        info('Account.Account Settings (Read), Zone.Zone (Edit), Zone.DNS (Edit)');
+
+        $token = password('Your Cloudflare API token');
+
+        return ['token' => $token];
+    }
+
+    public function credentialsAreValid(): bool
+    {
+        try {
+            $this->client()->get('user/tokens/verify')->throw();
+
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     /** @return array<string, mixed>|null */
@@ -111,80 +193,12 @@ class Cloudflare extends AbstractDnsProvider
         );
     }
 
-    protected function addProviderRecord(Record $record): void
-    {
-        $this->client()->post(
-            "zones/{$this->getZoneId()}/dns_records",
-            [
-                'type'    => $record->type->value,
-                'name'    => $record->name,
-                'content' => $record->value,
-                'ttl'     => $record->ttl,
-            ],
-        );
-    }
-
-    protected function updateProviderRecord(Record $record): void
-    {
-        $currentRecord = $this->getRecord($record);
-
-        $this->client()->put(
-            "zones/{$this->getZoneId()}/dns_records/{$currentRecord['id']}",
-            [
-                'type'    => $record->type->value,
-                'name'    => $record->name,
-                'content' => $record->value,
-                'ttl'     => $record->ttl,
-            ],
-        );
-    }
-
-    protected function addNewCredentials(): array
-    {
-        info('You can create a Cloudflare API token here:');
-        info('https://dash.cloudflare.com/profile/api-tokens');
-        info('');
-        info('Make sure you give it the following permissions:');
-        info('Account.Account Settings (Read), Zone.Zone (Edit), Zone.DNS (Edit)');
-
-        $token = password('Your Cloudflare API token');
-
-        return ['token' => $token];
-    }
-
-    protected function credentialsAreValid(): bool
-    {
-        try {
-            $this->client()->get('user/tokens/verify')->throw();
-
-            return true;
-        } catch (Exception $e) {
-            return false;
-        }
-    }
-
     protected function client(): PendingRequest
     {
         return Http::baseUrl(self::getApiBaseUrl())
             ->withToken($this->credentials['token'])
             ->acceptJson()
             ->asJson();
-    }
-
-    /** @return array<string, string>|null */
-    protected function getRecord(Record $record): ?array
-    {
-        $host = Domain::getFullDomain($record->name === '@' ? '' : $record->name, $this->domain);
-
-        $records = $this->client()->get(
-            "zones/{$this->getZoneId()}/dns_records",
-            [
-                'type' => $record->type->value,
-                'name' => $host,
-            ],
-        )->json();
-
-        return $records['result'][0] ?? null;
     }
 
     protected function getZoneId(): string
