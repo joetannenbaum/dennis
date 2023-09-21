@@ -16,24 +16,6 @@ class AppServiceProvider extends ServiceProvider
         if (Phar::running()) {
             File::ensureDirectoryExists(config('app.config_directory'));
         }
-
-        Command::mixin(
-            new class
-            {
-                public function promptsTable(): Closure
-                {
-                    return function (array $headers, array $data): void {
-                        $box = (new TableStyle())
-                            ->setHorizontalBorderChars('─')
-                            ->setVerticalBorderChars(' │', '│')
-                            ->setCrossingChars('┼', ' ┌', '┬', '─┐', '─┤', '─┘', '┴', ' └', ' ├');
-
-                        // @phpstan-ignore-next-line
-                        $this->table($headers, $data, $box);
-                    };
-                }
-            }
-        );
     }
 
     public function register(): void
